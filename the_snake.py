@@ -126,10 +126,10 @@ class Snake(GameObject):
 class Apple(GameObject):
     """Наследуемый класс яблока"""
 
-    def __init__(self, occupied_cells=[]):
+    def __init__(self, occupied_cells=None):
         super().__init__()
         self.body_color = APPLE_COLOR
-        self.position = self.randomize_position(occupied_cells)
+        self.position = self.randomize_position(occupied_cells or [])
 
     def draw(self):
         """Отрисовка на игровом поле"""
@@ -180,5 +180,5 @@ def main():
         clock.tick(SPEED)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
