@@ -1,5 +1,7 @@
 from random import choice, randint
+
 import pygame as pg
+
 
 # Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
@@ -66,7 +68,7 @@ class GameObject:
     def draw(self):
         """Отрисовка игрового объекта."""
         raise NotImplementedError(
-            "Метод draw() должен быть реализован в наследнике"
+            'Метод draw() должен быть реализован в наследнике'
         )
 
 
