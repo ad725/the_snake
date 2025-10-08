@@ -36,7 +36,7 @@ SNAKE_COLOR = (0, 255, 0)
 BODY_COLOR = (255, 255, 0)
 
 # Скорость движения змейки:
-SPEED = 10
+SPEED = 4
 
 # Настройка игрового окна:
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
@@ -73,10 +73,19 @@ class Snake(GameObject):
 
     def __init__(self):
         super().__init__(SNAKE_COLOR)
-        self.positions = [CENTER_POSITION]
+        self.positions = [self.position]
         self.direction = choice(ALL_DIRECTIONS)
-        self.length = 1
         self.last_tail_position = None
+
+    def add_new_head(self):
+        """Добавляет координаты новой головы."""
+        head_x, head_y = self.get_head_position()
+        dir_x, dir_y = self.direction
+        new_head = (
+            (head_x + dir_x * GRID_SIZE) % SCREEN_WIDTH,
+            (head_y + dir_y * GRID_SIZE) % SCREEN_HEIGHT
+        )
+        self.positions.insert(0, new_head)
 
     def get_head_position(self):
         """Возвращает позицию головы змейки."""
@@ -96,37 +105,24 @@ class Snake(GameObject):
 
     def move(self):
         """Перемещает змейку в текущем направлении."""
-        self.last_tail_position = self.positions[-1]
-        head_x, head_y = self.get_head_position()
-        dir_x, dir_y = self.direction
-        new_head = (
-            (head_x + dir_x * GRID_SIZE) % SCREEN_WIDTH,
-            (head_y + dir_y * GRID_SIZE) % SCREEN_HEIGHT
-        )
-
-        self.positions.insert(0, new_head)
-
-        if len(self.positions) > self.length:
-            self.positions.pop()
+        self.last_tail_position = self.positions.pop()
 
     def reset(self):
         """Сбрасывает змейку в начальное состояние."""
-        self.positions = [CENTER_POSITION]
+        self.positions = [self.position]
         self.direction = choice(ALL_DIRECTIONS)
-        self.length = 1
         self.last_tail_position = None
 
     def draw(self):
         """Отрисовывает змейку - только изменения."""
-        self.draw_cell(self.get_head_position())
-        last_tail = self.last_tail_position
-        if last_tail and last_tail != self.positions[-1]:
+        if self.last_tail_position is not None:
             rect = pg.Rect(self.last_tail_position, (GRID_SIZE, GRID_SIZE))
             pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, rect)
+        self.draw_cell(self.get_head_position())
 
     def increase_length(self):
         """Увеличивает длину змейки."""
-        self.length += 1
+        self.last_tail_position = None
 
 
 class Apple(GameObject):
@@ -179,7 +175,7 @@ def main():
     while True:
         clock.tick(SPEED)
         handle_keys(snake)
-        snake.move()
+        snake.add_new_head()
         head_position = snake.get_head_position()
 
         if head_position in snake.positions[4:]:
@@ -187,14 +183,12 @@ def main():
             snake.reset()
             apple.occupied_cells = snake.positions
             apple.randomize_position()
-            apple.draw()
-            for position in snake.positions:
-                snake.draw_cell(position)
         elif head_position == apple.position:
             snake.increase_length()
             apple.occupied_cells = snake.positions
             apple.randomize_position()
-
+        else:
+            snake.move()
         snake.draw()
         apple.draw()
         pg.display.update()
