@@ -120,7 +120,8 @@ class Snake(GameObject):
         """Отрисовывает змейку - только изменения."""
         self.draw_cell(self.get_head_position())
 
-        if self.last_tail_position and self.last_tail_position != self.positions[-1]:
+        if (self.last_tail_position
+            and self.last_tail_position != self.positions[-1]):
 
             rect = pg.Rect(self.last_tail_position, (GRID_SIZE, GRID_SIZE))
             pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, rect)
