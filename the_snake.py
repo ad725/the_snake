@@ -133,7 +133,7 @@ class Apple(GameObject):
 
     def __init__(self, occupied_cells=None):
         super().__init__(APPLE_COLOR)
-        occupied_cells = [CENTER_POSITION]
+        occupied_cells = occupied_cells or [CENTER_POSITION]
         self.randomize_position(occupied_cells)
 
     def draw(self):
