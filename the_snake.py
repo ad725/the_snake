@@ -36,7 +36,7 @@ SNAKE_COLOR = (0, 255, 0)
 BODY_COLOR = (255, 255, 0)
 
 # Скорость движения змейки:
-SPEED = 4
+SPEED = 6
 
 # Настройка игрового окна:
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
@@ -75,17 +75,8 @@ class Snake(GameObject):
         super().__init__(SNAKE_COLOR)
         self.positions = [self.position]
         self.direction = choice(ALL_DIRECTIONS)
-        self.last_tail_position = None
-
-    def add_new_head(self):
-        """Добавляет координаты новой головы."""
-        head_x, head_y = self.get_head_position()
-        dir_x, dir_y = self.direction
-        new_head = (
-            (head_x + dir_x * GRID_SIZE) % SCREEN_WIDTH,
-            (head_y + dir_y * GRID_SIZE) % SCREEN_HEIGHT
-        )
-        self.positions.insert(0, new_head)
+        self.length = 1
+        self.last_position = None
 
     def get_head_position(self):
         """Возвращает позицию головы змейки."""
@@ -93,9 +84,9 @@ class Snake(GameObject):
 
     def update_direction(self, new_direction):
         """
-        Принимает новое направление змейки.
-
         Обновляет направление змейки.
+
+        Принимает новое направление змейки.
         """
         opposite_directions = {
             UP: DOWN, DOWN: UP, LEFT: RIGHT, RIGHT: LEFT
@@ -105,24 +96,36 @@ class Snake(GameObject):
 
     def move(self):
         """Перемещает змейку в текущем направлении."""
-        self.last_tail_position = self.positions.pop()
+        head_x, head_y = self.get_head_position()
+        dir_x, dir_y = self.direction
+        new_head = (
+            (head_x + dir_x * GRID_SIZE) % SCREEN_WIDTH,
+            (head_y + dir_y * GRID_SIZE) % SCREEN_HEIGHT
+        )
+        self.positions.insert(0, new_head)
+
+        if len(self.positions) > self.length:
+            self.last_position = self.positions.pop()
+        else:
+            self.last_position = None
 
     def reset(self):
         """Сбрасывает змейку в начальное состояние."""
         self.positions = [self.position]
         self.direction = choice(ALL_DIRECTIONS)
-        self.last_tail_position = None
+        self.last_position = None
+        self.length = 1
 
     def draw(self):
         """Отрисовывает змейку - только изменения."""
-        if self.last_tail_position is not None:
-            rect = pg.Rect(self.last_tail_position, (GRID_SIZE, GRID_SIZE))
+        if self.last_position is not None:
+            rect = pg.Rect(self.last_position, (GRID_SIZE, GRID_SIZE))
             pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, rect)
         self.draw_cell(self.get_head_position())
 
     def increase_length(self):
         """Увеличивает длину змейки."""
-        self.last_tail_position = None
+        self.length += 1
 
 
 class Apple(GameObject):
@@ -130,24 +133,24 @@ class Apple(GameObject):
 
     def __init__(self, occupied_cells=None):
         super().__init__(APPLE_COLOR)
-        if occupied_cells is None:
-            occupied_cells = [CENTER_POSITION]
-        self.occupied_cells = occupied_cells
-        self.randomize_position()
+        occupied_cells = [CENTER_POSITION]
+        self.randomize_position(occupied_cells)
 
     def draw(self):
         """Отрисовывает яблоко на игровом поле."""
         self.draw_cell(self.position)
 
-    def randomize_position(self):
-        """Устанавливает случайную позицию для яблока."""
-        while True:
+    def randomize_position(self, occupied_cells):
+        """
+        Устанавливает случайную позицию для яблока.
+
+        Принимает список занятых ячеек.
+        """
+        while self.position in occupied_cells:
             self.position = (
                 randint(0, GRID_WIDTH - 1) * GRID_SIZE,
                 randint(0, GRID_HEIGHT - 1) * GRID_SIZE
             )
-            if self.position not in self.occupied_cells:
-                break
 
 
 def handle_keys(game_object):
@@ -169,26 +172,22 @@ def main():
     apple = Apple(snake.positions)
     screen.fill(BOARD_BACKGROUND_COLOR)
     apple.draw()
-    snake.draw_cell(snake.get_head_position())
+    snake.draw()
     pg.display.update()
 
     while True:
         clock.tick(SPEED)
         handle_keys(snake)
-        snake.add_new_head()
+        snake.move()
         head_position = snake.get_head_position()
 
         if head_position in snake.positions[4:]:
             screen.fill(BOARD_BACKGROUND_COLOR)
             snake.reset()
-            apple.occupied_cells = snake.positions
-            apple.randomize_position()
         elif head_position == apple.position:
             snake.increase_length()
-            apple.occupied_cells = snake.positions
-            apple.randomize_position()
-        else:
-            snake.move()
+            apple.randomize_position(snake.positions)
+
         snake.draw()
         apple.draw()
         pg.display.update()
